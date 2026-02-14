@@ -1,35 +1,35 @@
 -- ============================================================
 -- Gupta Agencies — Supabase Storage Bucket & Policies
--- Run in Supabase SQL Editor after schema + RLS
+-- Safe to re-run (drops existing policies first)
 -- ============================================================
 
--- Create storage buckets
-INSERT INTO storage.buckets (id, name, public) VALUES ('brand-logos', 'brand-logos', true);
-INSERT INTO storage.buckets (id, name, public) VALUES ('brand-pdfs', 'brand-pdfs', false);
+-- Create storage buckets (skip if already exist)
+INSERT INTO storage.buckets (id, name, public) VALUES ('brand-logos', 'brand-logos', true) ON CONFLICT (id) DO NOTHING;
+INSERT INTO storage.buckets (id, name, public) VALUES ('brand-pdfs', 'brand-pdfs', false) ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================
 -- BRAND LOGOS BUCKET — Public read, Admin write
 -- ============================================================
 
--- Anyone can read logos (public bucket)
+DROP POLICY IF EXISTS "public_read_logos" ON storage.objects;
 CREATE POLICY "public_read_logos" ON storage.objects
   FOR SELECT USING (bucket_id = 'brand-logos');
 
--- Only super_admin can upload logos
+DROP POLICY IF EXISTS "admin_upload_logos" ON storage.objects;
 CREATE POLICY "admin_upload_logos" ON storage.objects
   FOR INSERT WITH CHECK (
     bucket_id = 'brand-logos'
     AND public.is_super_admin()
   );
 
--- Only super_admin can update logos
+DROP POLICY IF EXISTS "admin_update_logos" ON storage.objects;
 CREATE POLICY "admin_update_logos" ON storage.objects
   FOR UPDATE USING (
     bucket_id = 'brand-logos'
     AND public.is_super_admin()
   );
 
--- Only super_admin can delete logos
+DROP POLICY IF EXISTS "admin_delete_logos" ON storage.objects;
 CREATE POLICY "admin_delete_logos" ON storage.objects
   FOR DELETE USING (
     bucket_id = 'brand-logos'
@@ -40,28 +40,28 @@ CREATE POLICY "admin_delete_logos" ON storage.objects
 -- BRAND PDFS BUCKET — Authenticated read, Admin write
 -- ============================================================
 
--- Authenticated users can read PDFs
+DROP POLICY IF EXISTS "auth_read_pdfs" ON storage.objects;
 CREATE POLICY "auth_read_pdfs" ON storage.objects
   FOR SELECT USING (
     bucket_id = 'brand-pdfs'
     AND auth.uid() IS NOT NULL
   );
 
--- Only super_admin can upload PDFs
+DROP POLICY IF EXISTS "admin_upload_pdfs" ON storage.objects;
 CREATE POLICY "admin_upload_pdfs" ON storage.objects
   FOR INSERT WITH CHECK (
     bucket_id = 'brand-pdfs'
     AND public.is_super_admin()
   );
 
--- Only super_admin can update PDFs
+DROP POLICY IF EXISTS "admin_update_pdfs" ON storage.objects;
 CREATE POLICY "admin_update_pdfs" ON storage.objects
   FOR UPDATE USING (
     bucket_id = 'brand-pdfs'
     AND public.is_super_admin()
   );
 
--- Only super_admin can delete PDFs
+DROP POLICY IF EXISTS "admin_delete_pdfs" ON storage.objects;
 CREATE POLICY "admin_delete_pdfs" ON storage.objects
   FOR DELETE USING (
     bucket_id = 'brand-pdfs'

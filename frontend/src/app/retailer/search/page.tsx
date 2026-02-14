@@ -5,18 +5,14 @@ import Link from 'next/link';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { createClient } from '@/lib/supabase/client';
 import { useCart } from '@/lib/cart-context';
-import type { Product } from '@/lib/types';
+import type { SKUWithDetails } from '@/lib/types';
 import { Search as SearchIcon, ShoppingBag, Plus, Minus } from 'lucide-react';
-
-interface SearchResult extends Product {
-    brand_name: string;
-}
 
 export default function SearchPage() {
     const supabase = createClient();
     const { items, addItem, updateQuantity, removeItem, totalItems } = useCart();
     const [query, setQuery] = useState('');
-    const [results, setResults] = useState<SearchResult[]>([]);
+    const [results, setResults] = useState<SKUWithDetails[]>([]);
     const [loading, setLoading] = useState(false);
     const [searched, setSearched] = useState(false);
 
@@ -26,12 +22,12 @@ export default function SearchPage() {
         setLoading(true);
         setSearched(true);
 
-        const { data } = await supabase.rpc('search_products', { search_query: q });
-        if (data) setResults(data as SearchResult[]);
+        const { data } = await supabase.rpc('search_skus', { search_query: q });
+        if (data) setResults(data as SKUWithDetails[]);
         setLoading(false);
     };
 
-    const getCartQty = (productId: string) => items.find(i => i.product.id === productId)?.quantity ?? 0;
+    const getCartQty = (skuId: string) => items.find(i => i.sku.id === skuId)?.quantity ?? 0;
 
     return (
         <DashboardLayout role="retailer">
@@ -42,7 +38,7 @@ export default function SearchPage() {
                     <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-muted)]" />
                     <input
                         className="input pl-11 text-base"
-                        placeholder="Search by product name, SKU code, or brand..."
+                        placeholder="Search by product, variant, SKU code, or brand..."
                         value={query}
                         onChange={e => handleSearch(e.target.value)}
                         autoFocus
@@ -56,32 +52,39 @@ export default function SearchPage() {
                     <div className="empty-state"><p>No results for &quot;{query}&quot;</p></div>
                 ) : (
                     <div className="space-y-2">
-                        {results.map(product => {
-                            const qty = getCartQty(product.id);
+                        {results.map(sku => {
+                            const qty = getCartQty(sku.id);
                             return (
-                                <div key={product.id} className="card flex items-center justify-between gap-3 py-3 px-4">
+                                <div key={sku.id} className="card flex items-center justify-between gap-3 py-3 px-4">
                                     <div className="flex-1 min-w-0">
-                                        <p className="font-medium text-sm">{product.product_name}</p>
-                                        <p className="text-xs text-[var(--text-muted)]">{product.brand_name} · {product.sku_code}</p>
+                                        <p className="font-medium text-sm">{sku.product_name} — {sku.variant_label}</p>
+                                        <p className="text-xs text-[var(--text-muted)]">{sku.brand_name} · {sku.sku_code}</p>
                                         <div className="flex items-center gap-3 mt-0.5">
-                                            <span className="text-xs text-[var(--text-muted)] line-through">₹{Number(product.mrp).toLocaleString('en-IN')}</span>
-                                            <span className="text-sm font-bold text-blue-600">₹{Number(product.dealer_price).toLocaleString('en-IN')}</span>
+                                            <span className="text-xs text-[var(--text-muted)] line-through">₹{Number(sku.mrp).toLocaleString('en-IN')}</span>
+                                            <span className="text-sm font-bold text-blue-600">₹{Number(sku.dealer_price).toLocaleString('en-IN')}</span>
                                         </div>
                                     </div>
                                     {qty > 0 ? (
                                         <div className="flex items-center bg-blue-50 rounded-lg">
-                                            <button onClick={() => qty === 1 ? removeItem(product.id) : updateQuantity(product.id, qty - 1)}
+                                            <button onClick={() => qty === 1 ? removeItem(sku.id) : updateQuantity(sku.id, qty - 1)}
                                                 className="w-9 h-9 flex items-center justify-center rounded-l-lg hover:bg-blue-100">
                                                 <Minus className="w-4 h-4 text-blue-600" />
                                             </button>
                                             <span className="w-8 text-center font-semibold text-sm text-blue-700">{qty}</span>
-                                            <button onClick={() => updateQuantity(product.id, qty + 1)}
+                                            <button onClick={() => updateQuantity(sku.id, qty + 1)}
                                                 className="w-9 h-9 flex items-center justify-center rounded-r-lg hover:bg-blue-100">
                                                 <Plus className="w-4 h-4 text-blue-600" />
                                             </button>
                                         </div>
                                     ) : (
-                                        <button onClick={() => addItem(product as unknown as Product, product.brand_name)} className="btn btn-primary btn-sm">
+                                        <button
+                                            onClick={() => addItem(
+                                                { id: sku.id, product_id: sku.product_id, sku_code: sku.sku_code, variant_label: sku.variant_label, case_size: sku.case_size, mrp: sku.mrp, dealer_price: sku.dealer_price, is_active: sku.is_active, created_at: sku.created_at, updated_at: sku.updated_at },
+                                                sku.product_name || '',
+                                                sku.brand_name || ''
+                                            )}
+                                            className="btn btn-primary btn-sm"
+                                        >
                                             <Plus className="w-4 h-4" /> Add
                                         </button>
                                     )}

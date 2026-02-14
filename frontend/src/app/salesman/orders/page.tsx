@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { createClient } from '@/lib/supabase/client';
-import type { Order } from '@/lib/types';
+import type { Order, SKU } from '@/lib/types';
 import { Eye, X } from 'lucide-react';
 
 export default function SalesmanOrdersPage() {
@@ -15,7 +15,7 @@ export default function SalesmanOrdersPage() {
     const fetchOrders = useCallback(async () => {
         const { data } = await supabase
             .from('orders')
-            .select('*, retailer:users!orders_retailer_id_fkey(business_name, owner_name), order_items(*, product:products(product_name, sku_code))')
+            .select('*, retailer:users!orders_retailer_id_fkey(business_name, owner_name), order_items(*, sku:skus(sku_code, variant_label, product:products(name)))')
             .order('created_at', { ascending: false });
         if (data) setOrders(data as unknown as Order[]);
         setLoading(false);
@@ -70,16 +70,22 @@ export default function SalesmanOrdersPage() {
                             <h4 className="font-semibold pt-2">Items</h4>
                             <div className="table-container">
                                 <table>
-                                    <thead><tr><th>Product</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead>
+                                    <thead><tr><th>Product / Variant</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead>
                                     <tbody>
-                                        {selectedOrder.order_items?.map(item => (
-                                            <tr key={item.id}>
-                                                <td>{(item as unknown as { product: { product_name: string } }).product?.product_name}</td>
-                                                <td>{item.quantity}</td>
-                                                <td>₹{Number(item.unit_price).toLocaleString('en-IN')}</td>
-                                                <td className="font-semibold">₹{Number(item.total_price).toLocaleString('en-IN')}</td>
-                                            </tr>
-                                        ))}
+                                        {selectedOrder.order_items?.map(item => {
+                                            const skuData = item.sku as unknown as SKU & { product?: { name: string } };
+                                            return (
+                                                <tr key={item.id}>
+                                                    <td>
+                                                        <p className="font-medium">{skuData?.product?.name}</p>
+                                                        <p className="text-xs text-[var(--text-muted)]">{skuData?.variant_label} · {skuData?.sku_code}</p>
+                                                    </td>
+                                                    <td>{item.quantity}</td>
+                                                    <td>₹{Number(item.unit_price).toLocaleString('en-IN')}</td>
+                                                    <td className="font-semibold">₹{Number(item.total_price).toLocaleString('en-IN')}</td>
+                                                </tr>
+                                            );
+                                        })}
                                     </tbody>
                                 </table>
                             </div>

@@ -22,7 +22,6 @@ export default function CartPage() {
         if (items.length === 0 || !profile) return;
         setPlacing(true);
 
-        // Create order
         const { data: order, error: orderError } = await supabase
             .from('orders')
             .insert({
@@ -41,13 +40,12 @@ export default function CartPage() {
             return;
         }
 
-        // Create order items
         const orderItems = items.map(item => ({
             order_id: order.id,
-            product_id: item.product.id,
+            sku_id: item.sku.id,
             quantity: item.quantity,
-            unit_price: item.product.dealer_price,
-            total_price: item.quantity * item.product.dealer_price,
+            unit_price: item.sku.dealer_price,
+            total_price: item.quantity * item.sku.dealer_price,
         }));
 
         const { error: itemsError } = await supabase
@@ -109,30 +107,29 @@ export default function CartPage() {
                     </div>
                 ) : (
                     <div className="grid lg:grid-cols-3 gap-6">
-                        {/* Cart Items */}
                         <div className="lg:col-span-2 space-y-2">
                             {items.map(item => (
-                                <div key={item.product.id} className="card flex items-center gap-3 py-3 px-4">
+                                <div key={item.sku.id} className="card flex items-center gap-3 py-3 px-4">
                                     <div className="flex-1 min-w-0">
-                                        <p className="font-medium text-sm">{item.product.product_name}</p>
-                                        <p className="text-xs text-[var(--text-muted)]">{item.brand_name} · {item.product.sku_code}</p>
+                                        <p className="font-medium text-sm">{item.product_name} — {item.sku.variant_label}</p>
+                                        <p className="text-xs text-[var(--text-muted)]">{item.brand_name} · {item.sku.sku_code}</p>
                                         <p className="text-sm font-semibold text-blue-600 mt-0.5">
-                                            ₹{Number(item.product.dealer_price).toLocaleString('en-IN')} × {item.quantity} = ₹{(item.quantity * item.product.dealer_price).toLocaleString('en-IN')}
+                                            ₹{Number(item.sku.dealer_price).toLocaleString('en-IN')} × {item.quantity} = ₹{(item.quantity * item.sku.dealer_price).toLocaleString('en-IN')}
                                         </p>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <div className="flex items-center bg-gray-50 rounded-lg">
-                                            <button onClick={() => item.quantity === 1 ? removeItem(item.product.id) : updateQuantity(item.product.id, item.quantity - 1)}
+                                            <button onClick={() => item.quantity === 1 ? removeItem(item.sku.id) : updateQuantity(item.sku.id, item.quantity - 1)}
                                                 className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-l-lg">
                                                 <Minus className="w-3.5 h-3.5" />
                                             </button>
                                             <span className="w-8 text-center text-sm font-semibold">{item.quantity}</span>
-                                            <button onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                                            <button onClick={() => updateQuantity(item.sku.id, item.quantity + 1)}
                                                 className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-r-lg">
                                                 <Plus className="w-3.5 h-3.5" />
                                             </button>
                                         </div>
-                                        <button onClick={() => removeItem(item.product.id)} className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg">
+                                        <button onClick={() => removeItem(item.sku.id)} className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg">
                                             <Trash2 className="w-4 h-4" />
                                         </button>
                                     </div>
@@ -140,7 +137,6 @@ export default function CartPage() {
                             ))}
                         </div>
 
-                        {/* Order Summary */}
                         <div className="lg:col-span-1">
                             <div className="card sticky top-20">
                                 <h3 className="font-semibold mb-4">Order Summary</h3>

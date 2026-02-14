@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { createClient } from '@/lib/supabase/client';
-import type { Order } from '@/lib/types';
+import type { Order, SKU } from '@/lib/types';
 import { Check, X as XIcon, Truck, Eye, X } from 'lucide-react';
 
 export default function AdminOrdersPage() {
@@ -16,7 +16,7 @@ export default function AdminOrdersPage() {
     const fetchOrders = useCallback(async () => {
         let query = supabase
             .from('orders')
-            .select('*, retailer:users!orders_retailer_id_fkey(business_name, owner_name, phone), order_items(*, product:products(product_name, sku_code))')
+            .select('*, retailer:users!orders_retailer_id_fkey(business_name, owner_name, phone), order_items(*, sku:skus(sku_code, variant_label, product:products(name)))')
             .order('created_at', { ascending: false });
         if (filter !== 'all') query = query.eq('status', filter);
         const { data } = await query;
@@ -54,9 +54,7 @@ export default function AdminOrdersPage() {
                 </div>
 
                 {loading ? (
-                    <div className="space-y-3">
-                        {[...Array(4)].map((_, i) => <div key={i} className="skeleton h-16 rounded-xl" />)}
-                    </div>
+                    <div className="space-y-3">{[...Array(4)].map((_, i) => <div key={i} className="skeleton h-16 rounded-xl" />)}</div>
                 ) : orders.length === 0 ? (
                     <div className="empty-state"><p>No orders found</p></div>
                 ) : (
@@ -122,17 +120,23 @@ export default function AdminOrdersPage() {
                             <h4 className="font-semibold pt-2">Items</h4>
                             <div className="table-container">
                                 <table>
-                                    <thead><tr><th>Product</th><th>SKU</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead>
+                                    <thead><tr><th>Product / Variant</th><th>SKU</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead>
                                     <tbody>
-                                        {selectedOrder.order_items?.map(item => (
-                                            <tr key={item.id}>
-                                                <td>{(item as unknown as { product: { product_name: string } }).product?.product_name}</td>
-                                                <td className="font-mono text-xs">{(item as unknown as { product: { sku_code: string } }).product?.sku_code}</td>
-                                                <td>{item.quantity}</td>
-                                                <td>₹{Number(item.unit_price).toLocaleString('en-IN')}</td>
-                                                <td className="font-semibold">₹{Number(item.total_price).toLocaleString('en-IN')}</td>
-                                            </tr>
-                                        ))}
+                                        {selectedOrder.order_items?.map(item => {
+                                            const skuData = item.sku as unknown as SKU & { product?: { name: string } };
+                                            return (
+                                                <tr key={item.id}>
+                                                    <td>
+                                                        <p className="font-medium">{skuData?.product?.name}</p>
+                                                        <p className="text-xs text-[var(--text-muted)]">{skuData?.variant_label}</p>
+                                                    </td>
+                                                    <td className="font-mono text-xs">{skuData?.sku_code}</td>
+                                                    <td>{item.quantity}</td>
+                                                    <td>₹{Number(item.unit_price).toLocaleString('en-IN')}</td>
+                                                    <td className="font-semibold">₹{Number(item.total_price).toLocaleString('en-IN')}</td>
+                                                </tr>
+                                            );
+                                        })}
                                     </tbody>
                                 </table>
                             </div>

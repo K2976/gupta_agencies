@@ -25,21 +25,43 @@ export interface Brand {
     updated_at: string;
 }
 
+// Product = grouping level (e.g., "Standard Epoxy Adhesive")
 export interface Product {
     id: string;
     brand_id: string;
+    name: string;
+    description: string | null;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+    // Joined fields
+    brand?: Brand;
+    skus?: SKU[];
+    sku_count?: number;
+    min_price?: number;
+    max_price?: number;
+}
+
+// SKU = variant level (e.g., "5g", "1.08kg")
+export interface SKU {
+    id: string;
+    product_id: string;
     sku_code: string;
-    product_name: string;
+    variant_label: string;
+    case_size: string | null;
     mrp: number;
     dealer_price: number;
     is_active: boolean;
     created_at: string;
     updated_at: string;
+    // Joined fields
+    product?: Product;
 }
 
-export interface ProductWithBrand extends Product {
+export interface SKUWithDetails extends SKU {
+    product_name?: string;
+    brand_id?: string;
     brand_name?: string;
-    brands?: { name: string };
 }
 
 export interface Order {
@@ -58,16 +80,17 @@ export interface Order {
 export interface OrderItem {
     id: string;
     order_id: string;
-    product_id: string;
+    sku_id: string;
     quantity: number;
     unit_price: number;
     total_price: number;
     created_at: string;
-    product?: Product;
+    sku?: SKU & { product?: { name: string; brand_id: string } };
 }
 
 export interface CartItem {
-    product: Product;
+    sku: SKU;
+    product_name: string;
     brand_name: string;
     quantity: number;
 }

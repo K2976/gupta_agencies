@@ -5,7 +5,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/lib/auth-context';
 import { useCart } from '@/lib/cart-context';
 import { createClient } from '@/lib/supabase/client';
-import type { Order, Product } from '@/lib/types';
+import type { Order, SKU } from '@/lib/types';
 import Link from 'next/link';
 import { Eye, RotateCcw, X, ShoppingBag } from 'lucide-react';
 
@@ -20,7 +20,7 @@ export default function RetailerOrdersPage() {
     const fetchOrders = useCallback(async () => {
         const { data } = await supabase
             .from('orders')
-            .select('*, order_items(*, product:products(id, product_name, sku_code, dealer_price, brand_id, mrp, is_active, created_at, updated_at, brands(name)))')
+            .select('*, order_items(*, sku:skus(id, sku_code, variant_label, dealer_price, mrp, case_size, is_active, created_at, updated_at, product_id, product:products(name, brand_id, brands(name))))')
             .order('created_at', { ascending: false });
         if (data) setOrders(data as unknown as Order[]);
         setLoading(false);
@@ -31,9 +31,14 @@ export default function RetailerOrdersPage() {
     const handleReorder = (order: Order) => {
         if (!order.order_items) return;
         order.order_items.forEach(item => {
-            const product = item.product as unknown as Product & { brands?: { name: string } };
-            if (product) {
-                addItem(product, product.brands?.name || '', item.quantity);
+            const skuData = item.sku as unknown as SKU & { product?: { name: string; brand_id: string; brands?: { name: string } } };
+            if (skuData) {
+                addItem(
+                    { id: skuData.id, product_id: skuData.product_id, sku_code: skuData.sku_code, variant_label: skuData.variant_label, case_size: skuData.case_size, mrp: skuData.mrp, dealer_price: skuData.dealer_price, is_active: skuData.is_active, created_at: skuData.created_at, updated_at: skuData.updated_at },
+                    skuData.product?.name || '',
+                    skuData.product?.brands?.name || '',
+                    item.quantity
+                );
             }
         });
         alert('Items added to cart!');
@@ -99,19 +104,22 @@ export default function RetailerOrdersPage() {
                             {selectedOrder.notes && <p className="text-[var(--text-secondary)]">Notes: {selectedOrder.notes}</p>}
                             <div className="table-container">
                                 <table>
-                                    <thead><tr><th>Product</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead>
+                                    <thead><tr><th>Product / Variant</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead>
                                     <tbody>
-                                        {selectedOrder.order_items?.map(item => (
-                                            <tr key={item.id}>
-                                                <td>
-                                                    <p className="font-medium">{(item as unknown as { product: { product_name: string } }).product?.product_name}</p>
-                                                    <p className="text-xs text-[var(--text-muted)]">{(item as unknown as { product: { sku_code: string } }).product?.sku_code}</p>
-                                                </td>
-                                                <td>{item.quantity}</td>
-                                                <td>₹{Number(item.unit_price).toLocaleString('en-IN')}</td>
-                                                <td className="font-semibold">₹{Number(item.total_price).toLocaleString('en-IN')}</td>
-                                            </tr>
-                                        ))}
+                                        {selectedOrder.order_items?.map(item => {
+                                            const skuData = item.sku as unknown as SKU & { product?: { name: string } };
+                                            return (
+                                                <tr key={item.id}>
+                                                    <td>
+                                                        <p className="font-medium">{skuData?.product?.name}</p>
+                                                        <p className="text-xs text-[var(--text-muted)]">{skuData?.variant_label} · {skuData?.sku_code}</p>
+                                                    </td>
+                                                    <td>{item.quantity}</td>
+                                                    <td>₹{Number(item.unit_price).toLocaleString('en-IN')}</td>
+                                                    <td className="font-semibold">₹{Number(item.total_price).toLocaleString('en-IN')}</td>
+                                                </tr>
+                                            );
+                                        })}
                                     </tbody>
                                 </table>
                             </div>
