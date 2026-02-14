@@ -35,6 +35,17 @@ export async function updateSession(request: NextRequest) {
         // Public paths that don't require auth
         if (path === '/' || path === '/auth/login') {
             if (user) {
+                // Check cached role cookie first (avoids DB roundtrip)
+                const cachedRole = request.cookies.get('user_role')?.value;
+                if (cachedRole && ['super_admin', 'salesman', 'retailer'].includes(cachedRole)) {
+                    const dashboardPath =
+                        cachedRole === 'super_admin' ? '/admin'
+                            : cachedRole === 'salesman' ? '/salesman'
+                                : '/retailer';
+                    return NextResponse.redirect(new URL(dashboardPath, request.url));
+                }
+
+                // Fallback: query profile (only on first login before cookie is set)
                 const { data: profile } = await supabase
                     .from('users')
                     .select('role')
@@ -43,12 +54,19 @@ export async function updateSession(request: NextRequest) {
 
                 if (profile) {
                     const dashboardPath =
-                        profile.role === 'super_admin'
-                            ? '/admin'
-                            : profile.role === 'salesman'
-                                ? '/salesman'
+                        profile.role === 'super_admin' ? '/admin'
+                            : profile.role === 'salesman' ? '/salesman'
                                 : '/retailer';
-                    return NextResponse.redirect(new URL(dashboardPath, request.url));
+                    const response = NextResponse.redirect(new URL(dashboardPath, request.url));
+                    // Cache role in cookie for fast subsequent requests
+                    response.cookies.set('user_role', profile.role, {
+                        httpOnly: true,
+                        secure: process.env.NODE_ENV === 'production',
+                        sameSite: 'lax',
+                        maxAge: 60 * 60 * 24, // 24 hours
+                        path: '/',
+                    });
+                    return response;
                 }
             }
             return supabaseResponse;
@@ -56,19 +74,38 @@ export async function updateSession(request: NextRequest) {
 
         // Protected paths — require auth
         if (!user) {
-            return NextResponse.redirect(new URL('/', request.url));
+            const response = NextResponse.redirect(new URL('/', request.url));
+            response.cookies.delete('user_role');
+            return response;
         }
 
-        // Role-based path protection
-        const { data: profile } = await supabase
-            .from('users')
-            .select('role, is_active')
-            .eq('id', user.id)
-            .single();
+        // Role-based path protection — use cached cookie (no DB roundtrip)
+        let role: string | undefined = request.cookies.get('user_role')?.value;
 
-        if (!profile || !profile.is_active) {
-            await supabase.auth.signOut();
-            return NextResponse.redirect(new URL('/', request.url));
+        if (!role || !['super_admin', 'salesman', 'retailer'].includes(role)) {
+            // Cache miss — query DB once and cache
+            const { data: profile } = await supabase
+                .from('users')
+                .select('role, is_active')
+                .eq('id', user.id)
+                .single();
+
+            if (!profile || !profile.is_active) {
+                await supabase.auth.signOut();
+                const response = NextResponse.redirect(new URL('/', request.url));
+                response.cookies.delete('user_role');
+                return response;
+            }
+            role = profile.role as string;
+
+            // Cache the role for future requests
+            supabaseResponse.cookies.set('user_role', role, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                maxAge: 60 * 60 * 24,
+                path: '/',
+            });
         }
 
         const rolePathMap: Record<string, string> = {
@@ -77,18 +114,16 @@ export async function updateSession(request: NextRequest) {
             retailer: '/retailer',
         };
 
-        const allowedPrefix = rolePathMap[profile.role];
+        const allowedPrefix = role ? rolePathMap[role] : undefined;
         if (allowedPrefix && !path.startsWith(allowedPrefix) && !path.startsWith('/api')) {
             return NextResponse.redirect(new URL(allowedPrefix, request.url));
         }
 
         return supabaseResponse;
     } catch (e) {
-        // AbortError is normal during dev HMR — ignore silently
         if (e instanceof Error && e.name === 'AbortError') {
             return supabaseResponse;
         }
-        // For any other error, let the request through rather than crashing
         return supabaseResponse;
     }
 }

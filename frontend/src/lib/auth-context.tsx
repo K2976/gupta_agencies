@@ -58,13 +58,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, [supabase, fetchProfile]);
 
     const signIn = async (email: string, password: string) => {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) return { error: error.message };
+        // Fetch profile and set role cookie for fast middleware
+        if (authData.user) {
+            const { data: prof } = await supabase.from('users').select('role').eq('id', authData.user.id).single();
+            if (prof?.role) {
+                document.cookie = `user_role=${prof.role};path=/;max-age=${60 * 60 * 24};samesite=lax`;
+            }
+        }
         return { error: null };
     };
 
     const signOut = async () => {
         await supabase.auth.signOut();
+        document.cookie = 'user_role=;path=/;max-age=0';
         setUser(null);
         setProfile(null);
     };
