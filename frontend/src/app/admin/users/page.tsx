@@ -56,14 +56,16 @@ export default function UsersPage() {
     };
 
     const handleSave = async () => {
-        if (!form.owner_name.trim() || !form.email.trim()) return;
+        if (!form.email.trim()) return;
+        // For salesman, owner_name is optional — use email prefix as fallback
+        const finalOwnerName = form.owner_name.trim() || form.email.split('@')[0];
         setSaving(true);
         setError('');
 
         if (editUser) {
             const updates: Record<string, unknown> = {
-                owner_name: form.owner_name, business_name: form.business_name,
-                phone: form.phone, address: form.address, gst: form.gst,
+                owner_name: finalOwnerName, business_name: form.business_name || null,
+                phone: form.phone || null, address: form.address || null, gst: form.gst || null,
             };
             if (form.role === 'retailer' && form.assigned_salesman_id) {
                 updates.assigned_salesman_id = form.assigned_salesman_id;
@@ -79,7 +81,7 @@ export default function UsersPage() {
             const res = await fetch('/api/users', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(form),
+                body: JSON.stringify({ ...form, owner_name: finalOwnerName }),
             });
             const result = await res.json();
             if (!res.ok) {
@@ -186,27 +188,33 @@ export default function UsersPage() {
                                 </>
                             )}
                             <div>
-                                <label className="label">Owner Name</label>
-                                <input className="input" value={form.owner_name} onChange={e => setForm({ ...form, owner_name: e.target.value })} />
+                                <label className="label">{form.role === 'retailer' || editUser?.role === 'retailer' ? 'Owner Name' : 'Name'}</label>
+                                <input className="input" placeholder={form.role !== 'retailer' ? 'Optional — uses email prefix' : ''} value={form.owner_name} onChange={e => setForm({ ...form, owner_name: e.target.value })} />
                             </div>
-                            <div>
-                                <label className="label">Business Name</label>
-                                <input className="input" value={form.business_name} onChange={e => setForm({ ...form, business_name: e.target.value })} />
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
+                            {(form.role === 'retailer' || editUser?.role === 'retailer') && (
+                                <div>
+                                    <label className="label">Business Name</label>
+                                    <input className="input" value={form.business_name} onChange={e => setForm({ ...form, business_name: e.target.value })} />
+                                </div>
+                            )}
+                            <div className={form.role === 'retailer' || editUser?.role === 'retailer' ? 'grid grid-cols-2 gap-3' : ''}>
                                 <div>
                                     <label className="label">Phone</label>
                                     <input className="input" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
                                 </div>
+                                {(form.role === 'retailer' || editUser?.role === 'retailer') && (
+                                    <div>
+                                        <label className="label">GST (optional)</label>
+                                        <input className="input" value={form.gst} onChange={e => setForm({ ...form, gst: e.target.value })} />
+                                    </div>
+                                )}
+                            </div>
+                            {(form.role === 'retailer' || editUser?.role === 'retailer') && (
                                 <div>
-                                    <label className="label">GST (optional)</label>
-                                    <input className="input" value={form.gst} onChange={e => setForm({ ...form, gst: e.target.value })} />
+                                    <label className="label">Address</label>
+                                    <input className="input" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} />
                                 </div>
-                            </div>
-                            <div>
-                                <label className="label">Address</label>
-                                <input className="input" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} />
-                            </div>
+                            )}
                             {(form.role === 'retailer' || editUser?.role === 'retailer') && (
                                 <div>
                                     <label className="label">Assigned Salesman</label>

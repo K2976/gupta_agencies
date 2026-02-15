@@ -6,7 +6,7 @@ export async function POST(request: Request) {
         const body = await request.json();
         const { email, password, role, owner_name, business_name, phone, address, gst, assigned_salesman_id } = body;
 
-        if (!email || !password || !role || !owner_name) {
+        if (!email || !password || !role) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
@@ -17,6 +17,9 @@ export async function POST(request: Request) {
         if (role === 'retailer' && !assigned_salesman_id) {
             return NextResponse.json({ error: 'Retailer must have an assigned salesman' }, { status: 400 });
         }
+
+        // Use email prefix as fallback name for salesman/admin
+        const finalOwnerName = owner_name?.trim() || email.split('@')[0];
 
         const supabase = await createServiceRoleClient();
 
@@ -36,7 +39,7 @@ export async function POST(request: Request) {
             id: authData.user.id,
             email,
             role,
-            owner_name,
+            owner_name: finalOwnerName,
             business_name: business_name || null,
             phone: phone || null,
             address: address || null,
