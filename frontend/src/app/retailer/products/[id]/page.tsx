@@ -113,7 +113,19 @@ export default function ProductSKUsPage({ params }: { params: Promise<{ id: stri
                                                 >
                                                     <Minus className="w-4 h-4 text-blue-600" />
                                                 </button>
-                                                <span className="w-8 text-center font-semibold text-sm text-blue-700">{qty}</span>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    value={qty}
+                                                    onChange={e => {
+                                                        const val = parseInt(e.target.value, 10);
+                                                        if (isNaN(val) || val < 0) return;
+                                                        if (val === 0) removeItem(sku.id);
+                                                        else updateQuantity(sku.id, val);
+                                                    }}
+                                                    onBlur={e => { if (!e.target.value || parseInt(e.target.value) <= 0) removeItem(sku.id); }}
+                                                    className="w-10 text-center font-semibold text-sm text-blue-700 bg-transparent border-none outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                                                />
                                                 <button
                                                     onClick={() => updateQuantity(sku.id, qty + 1)}
                                                     className="w-9 h-9 flex items-center justify-center rounded-r-lg hover:bg-blue-100 transition-colors"

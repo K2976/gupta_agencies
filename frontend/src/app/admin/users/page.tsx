@@ -134,7 +134,10 @@ export default function UsersPage() {
                                     <tr key={u.id}>
                                         <td className="font-medium">{u.owner_name}</td>
                                         <td className="text-sm">{u.email}</td>
-                                        <td><span className="badge badge-accepted text-xs">{u.role.replace('_', ' ')}</span></td>
+                                        <td><span className="text-xs font-medium px-2.5 py-1 rounded-full" style={{
+                                            background: u.role === 'super_admin' ? '#ede9fe' : u.role === 'salesman' ? '#dbeafe' : '#dcfce7',
+                                            color: u.role === 'super_admin' ? '#6d28d9' : u.role === 'salesman' ? '#1d4ed8' : '#15803d',
+                                        }}>{u.role.replace('_', ' ')}</span></td>
                                         <td className="text-sm text-[var(--text-secondary)]">{u.business_name || '—'}</td>
                                         <td className="text-sm">{u.phone || '—'}</td>
                                         <td>
