@@ -1,7 +1,7 @@
 -- ============================================================
 -- Dr. Fixit Product Catalog — Brand → Product → SKU
 -- Prices: Retailer Landing Price (incl GST) as dealer_price
--- Run AFTER schema.sql. Requires brand "Dr. Fixit" to exist.
+-- Run AFTER schema.sql + seed.sql
 -- ============================================================
 
 DO $$
@@ -366,7 +366,7 @@ BEGIN
   INSERT INTO public.skus (product_id, sku_code, variant_label, case_size, dealer_price, mrp) VALUES
     (p_primo_putty, 'DRF-655-20KG', '20 KG', NULL, 3805.50, 5000);
 
-  -- ========== PRIMO WHITE (112-PW) ==========
+  -- ========== PRIMO WHITE ==========
   INSERT INTO public.skus (product_id, sku_code, variant_label, case_size, dealer_price, mrp) VALUES
     (p_primo_white, 'DRF-PW-1LT',  '1 LT',  NULL, 200.42, 275),
     (p_primo_white, 'DRF-PW-4LT',  '4 LT',  NULL, 747.15, 1000),

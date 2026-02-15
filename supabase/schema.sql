@@ -1,15 +1,17 @@
 -- ============================================================
--- Gupta Agencies — B2B Distributor Ordering System
--- Supabase PostgreSQL Schema (Brand → Product → SKU)
+-- Gupta Agencies — Complete Database Schema
+-- Brand → Product → SKU hierarchy
+-- Run this FIRST on a fresh Supabase project
 -- ============================================================
 
+-- Enable extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pg_trgm";
 
 -- ============================================================
--- USERS TABLE
+-- 1. USERS TABLE
 -- ============================================================
-CREATE TABLE public.users (
+CREATE TABLE IF NOT EXISTS public.users (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT UNIQUE NOT NULL,
   role TEXT NOT NULL CHECK (role IN ('super_admin', 'salesman', 'retailer')),
@@ -24,14 +26,14 @@ CREATE TABLE public.users (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX idx_users_role ON public.users(role);
-CREATE INDEX idx_users_assigned_salesman ON public.users(assigned_salesman_id);
-CREATE INDEX idx_users_email ON public.users(email);
+CREATE INDEX IF NOT EXISTS idx_users_role ON public.users(role);
+CREATE INDEX IF NOT EXISTS idx_users_assigned_salesman ON public.users(assigned_salesman_id);
+CREATE INDEX IF NOT EXISTS idx_users_email ON public.users(email);
 
 -- ============================================================
--- BRANDS TABLE
+-- 2. BRANDS TABLE
 -- ============================================================
-CREATE TABLE public.brands (
+CREATE TABLE IF NOT EXISTS public.brands (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name TEXT NOT NULL,
   logo_url TEXT,
@@ -41,13 +43,13 @@ CREATE TABLE public.brands (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX idx_brands_name ON public.brands(name);
-CREATE INDEX idx_brands_active ON public.brands(is_active);
+CREATE INDEX IF NOT EXISTS idx_brands_name ON public.brands(name);
+CREATE INDEX IF NOT EXISTS idx_brands_active ON public.brands(is_active);
 
 -- ============================================================
--- PRODUCTS TABLE (product-level grouping under a brand)
+-- 3. PRODUCTS TABLE (product-level grouping under a brand)
 -- ============================================================
-CREATE TABLE public.products (
+CREATE TABLE IF NOT EXISTS public.products (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   brand_id UUID NOT NULL REFERENCES public.brands(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
@@ -57,15 +59,15 @@ CREATE TABLE public.products (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX idx_products_brand ON public.products(brand_id);
-CREATE INDEX idx_products_name ON public.products(name);
-CREATE INDEX idx_products_active ON public.products(is_active);
-CREATE INDEX idx_products_name_trgm ON public.products USING GIN (name gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_products_brand ON public.products(brand_id);
+CREATE INDEX IF NOT EXISTS idx_products_name ON public.products(name);
+CREATE INDEX IF NOT EXISTS idx_products_active ON public.products(is_active);
+CREATE INDEX IF NOT EXISTS idx_products_name_trgm ON public.products USING GIN (name gin_trgm_ops);
 
 -- ============================================================
--- SKUS TABLE (variants / SKU-level items under a product)
+-- 4. SKUS TABLE (variants under a product)
 -- ============================================================
-CREATE TABLE public.skus (
+CREATE TABLE IF NOT EXISTS public.skus (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   product_id UUID NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
   sku_code TEXT NOT NULL,
@@ -78,16 +80,16 @@ CREATE TABLE public.skus (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE UNIQUE INDEX idx_skus_sku_code ON public.skus(sku_code);
-CREATE INDEX idx_skus_product ON public.skus(product_id);
-CREATE INDEX idx_skus_active ON public.skus(is_active);
-CREATE INDEX idx_skus_variant_trgm ON public.skus USING GIN (variant_label gin_trgm_ops);
-CREATE INDEX idx_skus_sku_trgm ON public.skus USING GIN (sku_code gin_trgm_ops);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_skus_sku_code ON public.skus(sku_code);
+CREATE INDEX IF NOT EXISTS idx_skus_product ON public.skus(product_id);
+CREATE INDEX IF NOT EXISTS idx_skus_active ON public.skus(is_active);
+CREATE INDEX IF NOT EXISTS idx_skus_variant_trgm ON public.skus USING GIN (variant_label gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_skus_sku_trgm ON public.skus USING GIN (sku_code gin_trgm_ops);
 
 -- ============================================================
--- ORDERS TABLE
+-- 5. ORDERS TABLE
 -- ============================================================
-CREATE TABLE public.orders (
+CREATE TABLE IF NOT EXISTS public.orders (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   retailer_id UUID NOT NULL REFERENCES public.users(id),
   salesman_id UUID REFERENCES public.users(id),
@@ -99,15 +101,15 @@ CREATE TABLE public.orders (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX idx_orders_retailer ON public.orders(retailer_id);
-CREATE INDEX idx_orders_salesman ON public.orders(salesman_id);
-CREATE INDEX idx_orders_status ON public.orders(status);
-CREATE INDEX idx_orders_created ON public.orders(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_orders_retailer ON public.orders(retailer_id);
+CREATE INDEX IF NOT EXISTS idx_orders_salesman ON public.orders(salesman_id);
+CREATE INDEX IF NOT EXISTS idx_orders_status ON public.orders(status);
+CREATE INDEX IF NOT EXISTS idx_orders_created ON public.orders(created_at DESC);
 
 -- ============================================================
--- ORDER ITEMS TABLE
+-- 6. ORDER ITEMS TABLE
 -- ============================================================
-CREATE TABLE public.order_items (
+CREATE TABLE IF NOT EXISTS public.order_items (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   order_id UUID NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
   sku_id UUID NOT NULL REFERENCES public.skus(id),
@@ -117,13 +119,13 @@ CREATE TABLE public.order_items (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX idx_order_items_order ON public.order_items(order_id);
-CREATE INDEX idx_order_items_sku ON public.order_items(sku_id);
+CREATE INDEX IF NOT EXISTS idx_order_items_order ON public.order_items(order_id);
+CREATE INDEX IF NOT EXISTS idx_order_items_sku ON public.order_items(sku_id);
 
 -- ============================================================
--- UPDATED_AT TRIGGER
+-- 7. UPDATED_AT TRIGGER FUNCTION
 -- ============================================================
-CREATE OR REPLACE FUNCTION update_updated_at()
+CREATE OR REPLACE FUNCTION public.update_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
   NEW.updated_at = now();
@@ -131,25 +133,42 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trigger_users_updated_at
-  BEFORE UPDATE ON public.users FOR EACH ROW EXECUTE FUNCTION update_updated_at();
-
-CREATE TRIGGER trigger_brands_updated_at
-  BEFORE UPDATE ON public.brands FOR EACH ROW EXECUTE FUNCTION update_updated_at();
-
-CREATE TRIGGER trigger_products_updated_at
-  BEFORE UPDATE ON public.products FOR EACH ROW EXECUTE FUNCTION update_updated_at();
-
-CREATE TRIGGER trigger_skus_updated_at
-  BEFORE UPDATE ON public.skus FOR EACH ROW EXECUTE FUNCTION update_updated_at();
-
-CREATE TRIGGER trigger_orders_updated_at
-  BEFORE UPDATE ON public.orders FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_users_updated_at') THEN
+    CREATE TRIGGER trigger_users_updated_at BEFORE UPDATE ON public.users FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_brands_updated_at') THEN
+    CREATE TRIGGER trigger_brands_updated_at BEFORE UPDATE ON public.brands FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_products_updated_at') THEN
+    CREATE TRIGGER trigger_products_updated_at BEFORE UPDATE ON public.products FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_skus_updated_at') THEN
+    CREATE TRIGGER trigger_skus_updated_at BEFORE UPDATE ON public.skus FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_orders_updated_at') THEN
+    CREATE TRIGGER trigger_orders_updated_at BEFORE UPDATE ON public.orders FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+  END IF;
+END $$;
 
 -- ============================================================
--- SEARCH FUNCTION (searches products, SKUs, brands)
+-- 8. HELPER FUNCTIONS FOR RLS
 -- ============================================================
-CREATE OR REPLACE FUNCTION search_skus(search_query TEXT)
+CREATE OR REPLACE FUNCTION public.get_user_role()
+RETURNS TEXT AS $$
+  SELECT role FROM public.users WHERE id = auth.uid();
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+
+CREATE OR REPLACE FUNCTION public.is_super_admin()
+RETURNS BOOLEAN AS $$
+  SELECT EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'super_admin');
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+
+-- ============================================================
+-- 9. SEARCH FUNCTION
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.search_skus(search_query TEXT)
 RETURNS TABLE (
   id UUID,
   product_id UUID,
@@ -193,68 +212,68 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- ============================================================
--- DASHBOARD FUNCTIONS
+-- 10. DASHBOARD FUNCTIONS
 -- ============================================================
-CREATE OR REPLACE FUNCTION get_admin_dashboard()
+CREATE OR REPLACE FUNCTION public.get_admin_dashboard()
 RETURNS JSON AS $$
 DECLARE result JSON;
 BEGIN
   SELECT json_build_object(
-    'total_orders_today', (SELECT COUNT(*) FROM orders WHERE created_at >= CURRENT_DATE),
-    'orders_this_month', (SELECT COUNT(*) FROM orders WHERE created_at >= date_trunc('month', CURRENT_DATE)),
-    'pending_orders', (SELECT COUNT(*) FROM orders WHERE status = 'pending'),
-    'total_retailers', (SELECT COUNT(*) FROM users WHERE role = 'retailer' AND is_active = true),
-    'total_salesmen', (SELECT COUNT(*) FROM users WHERE role = 'salesman' AND is_active = true),
-    'total_brands', (SELECT COUNT(*) FROM brands WHERE is_active = true),
-    'orders_by_status', (SELECT json_object_agg(status, cnt) FROM (SELECT status, COUNT(*) as cnt FROM orders GROUP BY status) s),
-    'recent_orders', (
+    'total_orders_today', (SELECT COUNT(*) FROM public.orders WHERE created_at >= CURRENT_DATE),
+    'orders_this_month', (SELECT COUNT(*) FROM public.orders WHERE created_at >= date_trunc('month', CURRENT_DATE)),
+    'pending_orders', (SELECT COUNT(*) FROM public.orders WHERE status = 'pending'),
+    'total_retailers', (SELECT COUNT(*) FROM public.users WHERE role = 'retailer' AND is_active = true),
+    'total_salesmen', (SELECT COUNT(*) FROM public.users WHERE role = 'salesman' AND is_active = true),
+    'total_brands', (SELECT COUNT(*) FROM public.brands WHERE is_active = true),
+    'orders_by_status', (SELECT COALESCE(json_object_agg(status, cnt), '{}'::json) FROM (SELECT status, COUNT(*) as cnt FROM public.orders GROUP BY status) s),
+    'recent_orders', COALESCE((
       SELECT json_agg(row_to_json(t)) FROM (
         SELECT o.id, o.total_amount, o.status, o.created_at, u.business_name as retailer_name
-        FROM orders o JOIN users u ON u.id = o.retailer_id
+        FROM public.orders o JOIN public.users u ON u.id = o.retailer_id
         ORDER BY o.created_at DESC LIMIT 10
       ) t
-    )
+    ), '[]'::json)
   ) INTO result;
   RETURN result;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-CREATE OR REPLACE FUNCTION get_salesman_dashboard(salesman_uuid UUID)
+CREATE OR REPLACE FUNCTION public.get_salesman_dashboard(salesman_uuid UUID)
 RETURNS JSON AS $$
 DECLARE result JSON;
 BEGIN
   SELECT json_build_object(
-    'total_retailers', (SELECT COUNT(*) FROM users WHERE assigned_salesman_id = salesman_uuid AND is_active = true),
-    'orders_today', (SELECT COUNT(*) FROM orders WHERE salesman_id = salesman_uuid AND created_at >= CURRENT_DATE),
-    'orders_this_month', (SELECT COUNT(*) FROM orders WHERE salesman_id = salesman_uuid AND created_at >= date_trunc('month', CURRENT_DATE)),
-    'pending_orders', (SELECT COUNT(*) FROM orders WHERE salesman_id = salesman_uuid AND status = 'pending'),
-    'recent_orders', (
+    'total_retailers', (SELECT COUNT(*) FROM public.users WHERE assigned_salesman_id = salesman_uuid AND is_active = true),
+    'orders_today', (SELECT COUNT(*) FROM public.orders WHERE salesman_id = salesman_uuid AND created_at >= CURRENT_DATE),
+    'orders_this_month', (SELECT COUNT(*) FROM public.orders WHERE salesman_id = salesman_uuid AND created_at >= date_trunc('month', CURRENT_DATE)),
+    'pending_orders', (SELECT COUNT(*) FROM public.orders WHERE salesman_id = salesman_uuid AND status = 'pending'),
+    'recent_orders', COALESCE((
       SELECT json_agg(row_to_json(t)) FROM (
         SELECT o.id, o.total_amount, o.status, o.created_at, u.business_name as retailer_name
-        FROM orders o JOIN users u ON u.id = o.retailer_id
+        FROM public.orders o JOIN public.users u ON u.id = o.retailer_id
         WHERE o.salesman_id = salesman_uuid
         ORDER BY o.created_at DESC LIMIT 10
       ) t
-    )
+    ), '[]'::json)
   ) INTO result;
   RETURN result;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-CREATE OR REPLACE FUNCTION get_retailer_dashboard(retailer_uuid UUID)
+CREATE OR REPLACE FUNCTION public.get_retailer_dashboard(retailer_uuid UUID)
 RETURNS JSON AS $$
 DECLARE result JSON;
 BEGIN
   SELECT json_build_object(
-    'total_orders', (SELECT COUNT(*) FROM orders WHERE retailer_id = retailer_uuid),
-    'pending_orders', (SELECT COUNT(*) FROM orders WHERE retailer_id = retailer_uuid AND status = 'pending'),
-    'recent_orders', (
+    'total_orders', (SELECT COUNT(*) FROM public.orders WHERE retailer_id = retailer_uuid),
+    'pending_orders', (SELECT COUNT(*) FROM public.orders WHERE retailer_id = retailer_uuid AND status = 'pending'),
+    'recent_orders', COALESCE((
       SELECT json_agg(row_to_json(t)) FROM (
         SELECT o.id, o.total_amount, o.status, o.created_at
-        FROM orders o WHERE o.retailer_id = retailer_uuid
+        FROM public.orders o WHERE o.retailer_id = retailer_uuid
         ORDER BY o.created_at DESC LIMIT 10
       ) t
-    )
+    ), '[]'::json)
   ) INTO result;
   RETURN result;
 END;

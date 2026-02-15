@@ -1,20 +1,15 @@
 -- ============================================================
--- Gupta Agencies — Seed Data
--- ============================================================
--- NOTE: The super_admin user must first be created via Supabase Auth
--- (email: admin@guptaagencies.com, password: Admin@123456)
--- Then insert the corresponding row here with the auth user's UUID.
---
--- Replace 'YOUR_ADMIN_AUTH_UUID' with the actual UUID from auth.users.
+-- Gupta Agencies — Seed Data (Brands)
+-- Run AFTER schema.sql + rls-policies.sql
+-- Safe to re-run (uses ON CONFLICT)
 -- ============================================================
 
--- Insert all distributor brands
 INSERT INTO public.brands (name, is_active) VALUES
+  ('Araldite', true),
+  ('Dr. Fixit', true),
   ('Madhurima', true),
   ('Patanjali', true),
   ('Neha Mehendi', true),
-  ('Dr Fixit', true),
-  ('Araldite', true),
   ('Gainda', true),
   ('Ratan Broom', true),
   ('Bonn Products Pvt Ltd', true),
