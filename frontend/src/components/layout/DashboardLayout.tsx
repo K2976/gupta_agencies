@@ -124,20 +124,7 @@ export default function DashboardLayout({
                 </main>
             </div>
 
-            {/* Mobile bottom nav */}
-            <nav className="mobile-nav">
-                {items.slice(0, 5).map(item => (
-                    <Link
-                        key={item.href}
-                        href={item.href}
-                        className={`flex flex-col items-center gap-0.5 px-2 py-1 text-xs ${pathname === item.href ? 'text-blue-600' : 'text-gray-400'
-                            }`}
-                    >
-                        {item.icon}
-                        <span>{item.label}</span>
-                    </Link>
-                ))}
-            </nav>
+
 
             {/* Mobile close sidebar button */}
             {sidebarOpen && (
