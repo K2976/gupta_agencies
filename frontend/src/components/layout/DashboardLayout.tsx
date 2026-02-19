@@ -62,7 +62,7 @@ export default function DashboardLayout({
             {/* Sidebar */}
             <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
                 {/* Toggle button at top */}
-                <div className="sidebar-toggle-area">
+                <div className={`sidebar-toggle-area ${sidebarOpen ? '' : 'justify-center'}`}>
                     <button
                         onClick={() => setSidebarOpen(!sidebarOpen)}
                         className="sidebar-toggle-btn"
