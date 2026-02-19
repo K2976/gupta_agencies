@@ -44,14 +44,22 @@ export default function RetailerBrandsPage() {
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                         {filtered.map(brand => (
                             <div key={brand.id} className="card text-center py-6 hover:border-blue-300 transition-all hover:-translate-y-1">
-                                <div className="w-16 h-16 rounded-full mx-auto mb-3 flex items-center justify-center text-2xl font-bold shadow-sm"
-                                    style={{
-                                        background: `linear-gradient(135deg, hsl(${brand.name.charCodeAt(0) * 3}, 65%, 55%), hsl(${brand.name.charCodeAt(0) * 3 + 40}, 65%, 45%))`,
-                                        color: 'white',
-                                    }}
-                                >
-                                    {brand.name.charAt(0)}
-                                </div>
+                                {brand.logo_url ? (
+                                    <img
+                                        src={brand.logo_url}
+                                        alt={brand.name}
+                                        className="w-16 h-16 rounded-full mx-auto mb-3 object-contain shadow-sm bg-white"
+                                    />
+                                ) : (
+                                    <div className="w-16 h-16 rounded-full mx-auto mb-3 flex items-center justify-center text-2xl font-bold shadow-sm"
+                                        style={{
+                                            background: `linear-gradient(135deg, hsl(${brand.name.charCodeAt(0) * 3}, 65%, 55%), hsl(${brand.name.charCodeAt(0) * 3 + 40}, 65%, 45%))`,
+                                            color: 'white',
+                                        }}
+                                    >
+                                        {brand.name.charAt(0)}
+                                    </div>
+                                )}
                                 <h3 className="font-semibold text-sm mb-3">{brand.name}</h3>
                                 <div className="flex flex-col gap-2 px-2">
                                     <Link href={`/retailer/brands/${brand.id}`} className="btn btn-primary btn-sm w-full">
