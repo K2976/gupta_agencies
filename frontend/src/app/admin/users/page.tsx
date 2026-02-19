@@ -113,7 +113,7 @@ export default function UsersPage() {
                 <div className="flex gap-2 mb-4 flex-wrap">
                     {roles.map(r => (
                         <button key={r} onClick={() => { setRoleFilter(r); setLoading(true); }}
-                            className={`btn btn-sm ${roleFilter === r ? 'btn-primary' : 'btn-secondary'}`}>
+                            className={`btn btn-sm ${roleFilter === r ? (r === 'all' ? 'btn-primary' : `btn-filter-${r}`) : 'btn-secondary'}`}>
                             {r === 'all' ? 'All' : r.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase())}
                         </button>
                     ))}

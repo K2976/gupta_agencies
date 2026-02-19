@@ -217,6 +217,78 @@
     color: #1e40af;
   }
 
+  /* Colored filter buttons — order statuses */
+  .btn-filter-pending {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fcd34d;
+  }
+
+  .btn-filter-pending:hover {
+    background: #fde68a;
+  }
+
+  .btn-filter-accepted {
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #6ee7b7;
+  }
+
+  .btn-filter-accepted:hover {
+    background: #a7f3d0;
+  }
+
+  .btn-filter-rejected {
+    background: #fecaca;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+  }
+
+  .btn-filter-rejected:hover {
+    background: #fca5a5;
+  }
+
+  .btn-filter-delivered {
+    background: #dbeafe;
+    color: #1e40af;
+    border: 1px solid #93c5fd;
+  }
+
+  .btn-filter-delivered:hover {
+    background: #bfdbfe;
+  }
+
+  /* Colored filter buttons — user roles */
+  .btn-filter-super_admin {
+    background: #ede9fe;
+    color: #6d28d9;
+    border: 1px solid #c4b5fd;
+  }
+
+  .btn-filter-super_admin:hover {
+    background: #ddd6fe;
+  }
+
+  .btn-filter-salesman {
+    background: #dbeafe;
+    color: #1d4ed8;
+    border: 1px solid #93c5fd;
+  }
+
+  .btn-filter-salesman:hover {
+    background: #bfdbfe;
+  }
+
+  .btn-filter-retailer {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #86efac;
+  }
+
+  .btn-filter-retailer:hover {
+    background: #bbf7d0;
+  }
+
   .sidebar {
     background: var(--color-navy-950);
     color: white;
@@ -394,8 +466,13 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
@@ -403,6 +480,7 @@
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -410,8 +488,13 @@
 }
 
 @keyframes skeleton {
-  from { background-position: 200% 0; }
-  to { background-position: -200% 0; }
+  from {
+    background-position: 200% 0;
+  }
+
+  to {
+    background-position: -200% 0;
+  }
 }
 
 /* Responsive: Mobile nav + sidebar */
