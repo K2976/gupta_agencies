@@ -8,7 +8,7 @@ import { Plus, Pencil, Trash2, Upload, X, Search, ChevronDown, ChevronRight } fr
 
 export default function ProductsPage() {
     const supabase = createClient();
-    const [products, setProducts] = useState<(Product & { brand_name?: string; skus?: SKU[] })[]>([]);
+    const [products, setProducts] = useState<(Product & { brand_name?: string; brand_logo?: string | null; skus?: SKU[] })[]>([]);
     const [brands, setBrands] = useState<Brand[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -33,7 +33,7 @@ export default function ProductsPage() {
     const fetchProducts = useCallback(async () => {
         let query = supabase
             .from('products')
-            .select('*, brands(name), skus(*)')
+            .select('*, brands(name, logo_url), skus(*)')
             .order('name');
         if (search) {
             query = query.or(`name.ilike.%${search}%`);
@@ -42,8 +42,9 @@ export default function ProductsPage() {
         if (data) {
             setProducts(data.map((p: Record<string, unknown>) => ({
                 ...p,
-                brand_name: (p.brands as { name: string } | null)?.name || '',
-            })) as (Product & { brand_name?: string; skus?: SKU[] })[]);
+                brand_name: (p.brands as { name: string; logo_url?: string } | null)?.name || '',
+                brand_logo: (p.brands as { name: string; logo_url?: string } | null)?.logo_url || null,
+            })) as (Product & { brand_name?: string; brand_logo?: string | null; skus?: SKU[] })[]);
         }
         setLoading(false);
     }, [supabase, search]);
@@ -196,6 +197,18 @@ export default function ProductsPage() {
                                     <div className="flex items-center justify-between py-2 px-1 cursor-pointer" onClick={() => setExpandedProduct(isOpen ? null : p.id)}>
                                         <div className="flex items-center gap-3 flex-1 min-w-0">
                                             {isOpen ? <ChevronDown className="w-4 h-4 text-[var(--text-muted)] shrink-0" /> : <ChevronRight className="w-4 h-4 text-[var(--text-muted)] shrink-0" />}
+                                            {p.brand_logo ? (
+                                                <img src={p.brand_logo} alt={p.brand_name || ''} className="w-8 h-8 rounded-full object-contain bg-white border border-[var(--border-color)] shrink-0" />
+                                            ) : (
+                                                <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+                                                    style={{
+                                                        background: `linear-gradient(135deg, hsl(${(p.brand_name || 'X').charCodeAt(0) * 3}, 65%, 55%), hsl(${(p.brand_name || 'X').charCodeAt(0) * 3 + 40}, 65%, 45%))`,
+                                                        color: 'white',
+                                                    }}
+                                                >
+                                                    {(p.brand_name || '?').charAt(0)}
+                                                </div>
+                                            )}
                                             <div>
                                                 <p className="font-semibold text-sm">{p.name}</p>
                                                 <p className="text-xs text-[var(--text-muted)]">{p.brand_name} · {activeSkus.length} SKU{activeSkus.length !== 1 ? 's' : ''}</p>
