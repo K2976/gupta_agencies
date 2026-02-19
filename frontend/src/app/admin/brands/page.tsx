@@ -129,10 +129,24 @@ export default function BrandsPage() {
                                             </div>
                                         </td>
                                         <td>
-                                            <label className="btn btn-ghost btn-sm cursor-pointer">
-                                                <Upload className="w-3.5 h-3.5" /> {brand.logo_url ? 'Replace' : 'Upload'}
-                                                <input type="file" accept="image/*" className="hidden" onChange={e => e.target.files?.[0] && handleLogoUpload(brand.id, e.target.files[0])} />
-                                            </label>
+                                            {brand.logo_url ? (
+                                                <label className="relative group cursor-pointer inline-block">
+                                                    <img
+                                                        src={brand.logo_url}
+                                                        alt={brand.name}
+                                                        className="w-10 h-10 rounded-full object-contain bg-white border border-[var(--border-color)] shadow-sm"
+                                                    />
+                                                    <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <Pencil className="w-3.5 h-3.5 text-white" />
+                                                    </div>
+                                                    <input type="file" accept="image/*" className="hidden" onChange={e => e.target.files?.[0] && handleLogoUpload(brand.id, e.target.files[0])} />
+                                                </label>
+                                            ) : (
+                                                <label className="btn btn-ghost btn-sm cursor-pointer">
+                                                    <Upload className="w-3.5 h-3.5" /> Upload
+                                                    <input type="file" accept="image/*" className="hidden" onChange={e => e.target.files?.[0] && handleLogoUpload(brand.id, e.target.files[0])} />
+                                                </label>
+                                            )}
                                         </td>
                                         <td>
                                             <div className="flex items-center gap-1">
