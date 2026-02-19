@@ -75,6 +75,17 @@ export default function BrandsPage() {
         fetchBrands();
     };
 
+    const handleLogoDelete = async (brand: Brand) => {
+        if (!confirm('Remove this logo?')) return;
+        const url = brand.logo_url || '';
+        const pathMatch = url.split('/brand-logos/')[1];
+        if (pathMatch) {
+            await supabase.storage.from('brand-logos').remove([decodeURIComponent(pathMatch)]);
+        }
+        await supabase.from('brands').update({ logo_url: null }).eq('id', brand.id);
+        fetchBrands();
+    };
+
     return (
         <DashboardLayout role="super_admin">
             <div className="animate-fade-in">
@@ -130,17 +141,22 @@ export default function BrandsPage() {
                                         </td>
                                         <td>
                                             {brand.logo_url ? (
-                                                <label className="relative group cursor-pointer inline-block">
+                                                <div className="relative group inline-flex items-center gap-2">
                                                     <img
                                                         src={brand.logo_url}
                                                         alt={brand.name}
                                                         className="w-10 h-10 rounded-full object-contain bg-white border border-[var(--border-color)] shadow-sm"
                                                     />
-                                                    <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <Pencil className="w-3.5 h-3.5 text-white" />
+                                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <label className="p-1.5 rounded-full bg-gray-100 hover:bg-blue-100 cursor-pointer transition-colors" title="Replace logo">
+                                                            <Pencil className="w-3 h-3 text-gray-600 hover:text-blue-600" />
+                                                            <input type="file" accept="image/*" className="hidden" onChange={e => e.target.files?.[0] && handleLogoUpload(brand.id, e.target.files[0])} />
+                                                        </label>
+                                                        <button onClick={() => handleLogoDelete(brand)} className="p-1.5 rounded-full bg-gray-100 hover:bg-red-100 transition-colors" title="Delete logo">
+                                                            <Trash2 className="w-3 h-3 text-gray-600 hover:text-red-500" />
+                                                        </button>
                                                     </div>
-                                                    <input type="file" accept="image/*" className="hidden" onChange={e => e.target.files?.[0] && handleLogoUpload(brand.id, e.target.files[0])} />
-                                                </label>
+                                                </div>
                                             ) : (
                                                 <label className="btn btn-ghost btn-sm cursor-pointer">
                                                     <Upload className="w-3.5 h-3.5" /> Upload
