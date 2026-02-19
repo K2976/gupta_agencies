@@ -95,14 +95,22 @@ export default function RetailerDashboard() {
                                     href={`/retailer/brands/${brand.id}`}
                                     className="card text-center py-4 px-2 hover:border-blue-300 transition-all hover:-translate-y-0.5"
                                 >
-                                    <div className="w-12 h-12 rounded-full mx-auto mb-2 flex items-center justify-center text-lg font-bold"
-                                        style={{
-                                            background: `linear-gradient(135deg, hsl(${brand.name.charCodeAt(0) * 3}, 70%, 55%), hsl(${brand.name.charCodeAt(0) * 3 + 40}, 70%, 45%))`,
-                                            color: 'white',
-                                        }}
-                                    >
-                                        {brand.name.charAt(0)}
-                                    </div>
+                                    {brand.logo_url ? (
+                                        <img
+                                            src={brand.logo_url}
+                                            alt={brand.name}
+                                            className="w-12 h-12 rounded-full mx-auto mb-2 object-contain shadow-sm bg-white"
+                                        />
+                                    ) : (
+                                        <div className="w-12 h-12 rounded-full mx-auto mb-2 flex items-center justify-center text-lg font-bold"
+                                            style={{
+                                                background: `linear-gradient(135deg, hsl(${brand.name.charCodeAt(0) * 3}, 70%, 55%), hsl(${brand.name.charCodeAt(0) * 3 + 40}, 70%, 45%))`,
+                                                color: 'white',
+                                            }}
+                                        >
+                                            {brand.name.charAt(0)}
+                                        </div>
+                                    )}
                                     <p className="text-xs font-medium leading-tight">{brand.name}</p>
                                 </Link>
                             ))}
