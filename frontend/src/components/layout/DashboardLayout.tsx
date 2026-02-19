@@ -61,9 +61,21 @@ export default function DashboardLayout({
         <div className="min-h-screen bg-[var(--bg-secondary)]">
             {/* Sidebar */}
             <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
-                <div className="p-5 border-b border-white/10">
+                {/* Toggle button at top */}
+                <div className="sidebar-toggle-area">
+                    <button
+                        onClick={() => setSidebarOpen(!sidebarOpen)}
+                        className="sidebar-toggle-btn"
+                        title={sidebarOpen ? 'Collapse menu' : 'Expand menu'}
+                    >
+                        <Menu className="w-5 h-5" />
+                    </button>
+                </div>
+
+                {/* Branding — visible only when expanded */}
+                <div className={`sidebar-brand ${sidebarOpen ? '' : 'hidden'}`}>
                     <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg flex items-center justify-center"
+                        <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
                             style={{ background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)' }}
                         >
                             <Package2 className="w-5 h-5 text-white" />
@@ -75,21 +87,24 @@ export default function DashboardLayout({
                     </div>
                 </div>
 
-                <nav className="flex-1 p-3 space-y-0.5">
+                {/* Nav links */}
+                <nav className="flex-1 p-2 space-y-0.5">
                     {items.map(item => (
                         <Link
                             key={item.href}
                             href={item.href}
                             onClick={() => setSidebarOpen(false)}
-                            className={`sidebar-link ${pathname === item.href ? 'active' : ''}`}
+                            className={`sidebar-link ${pathname === item.href ? 'active' : ''} ${sidebarOpen ? '' : 'justify-center'}`}
+                            title={!sidebarOpen ? item.label : undefined}
                         >
-                            {item.icon}
-                            {item.label}
+                            <span className="shrink-0">{item.icon}</span>
+                            {sidebarOpen && <span>{item.label}</span>}
                         </Link>
                     ))}
                 </nav>
 
-                <div className="p-3 border-t border-white/10">
+                {/* Footer — visible only when expanded */}
+                <div className={`p-3 border-t border-white/10 ${sidebarOpen ? '' : 'hidden'}`}>
                     <div className="px-3 py-2 mb-2">
                         <p className="text-xs text-gray-400 truncate">{profile?.owner_name || 'User'}</p>
                         <p className="text-xs text-gray-500 truncate">{profile?.email}</p>
@@ -97,6 +112,13 @@ export default function DashboardLayout({
                     <button onClick={handleSignOut} className="sidebar-link w-full text-red-400 hover:text-red-300 hover:bg-red-500/10">
                         <LogOut className="w-5 h-5" />
                         Sign Out
+                    </button>
+                </div>
+
+                {/* Collapsed footer — sign out icon only */}
+                <div className={`border-t border-white/10 flex items-center justify-center py-3 ${sidebarOpen ? 'hidden' : ''}`}>
+                    <button onClick={handleSignOut} className="p-2 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors" title="Sign Out">
+                        <LogOut className="w-5 h-5" />
                     </button>
                 </div>
             </aside>
@@ -107,11 +129,11 @@ export default function DashboardLayout({
             )}
 
             {/* Main content */}
-            <div className="main-content min-h-screen">
-                {/* Top bar (mobile) */}
+            <div className={`main-content min-h-screen transition-[margin] duration-300`}>
+                {/* Mobile top bar */}
                 <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-lg border-b border-[var(--border-color)] md:hidden">
                     <div className="flex items-center justify-between px-4 h-14">
-                        <button onClick={() => setSidebarOpen(true)} className="p-2 -ml-2 rounded-lg hover:bg-gray-100">
+                        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 -ml-2 rounded-lg hover:bg-gray-100">
                             <Menu className="w-5 h-5" />
                         </button>
                         <span className="text-sm font-semibold">Gupta Agencies</span>
@@ -123,8 +145,6 @@ export default function DashboardLayout({
                     {children}
                 </main>
             </div>
-
-
 
             {/* Mobile close sidebar button */}
             {sidebarOpen && (
