@@ -11,6 +11,7 @@ export default function UsersPage() {
     const [users, setUsers] = useState<UserProfile[]>([]);
     const [loading, setLoading] = useState(true);
     const [roleFilter, setRoleFilter] = useState<string>('all');
+    const [expandedUser, setExpandedUser] = useState<string | null>(null);
     const [showModal, setShowModal] = useState(false);
     const [editUser, setEditUser] = useState<UserProfile | null>(null);
     const [salesmen, setSalesmen] = useState<UserProfile[]>([]);
@@ -124,39 +125,97 @@ export default function UsersPage() {
                 ) : users.length === 0 ? (
                     <div className="empty-state"><p>No users found</p></div>
                 ) : (
-                    <div className="table-container">
-                        <table>
-                            <thead>
-                                <tr><th>Name</th><th>Email</th><th>Role</th><th>Business</th><th>Phone</th><th>Status</th><th>Actions</th></tr>
-                            </thead>
-                            <tbody>
-                                {users.map(u => (
-                                    <tr key={u.id}>
-                                        <td className="font-medium">{u.owner_name}</td>
-                                        <td className="text-sm">{u.email}</td>
-                                        <td><span className="text-xs font-medium px-2.5 py-1 rounded-full" style={{
-                                            background: u.role === 'super_admin' ? '#ede9fe' : u.role === 'salesman' ? '#dbeafe' : '#dcfce7',
-                                            color: u.role === 'super_admin' ? '#6d28d9' : u.role === 'salesman' ? '#1d4ed8' : '#15803d',
-                                        }}>{u.role.replace('_', ' ')}</span></td>
-                                        <td className="text-sm text-[var(--text-secondary)]">{u.business_name || '—'}</td>
-                                        <td className="text-sm">{u.phone || '—'}</td>
-                                        <td>
+                    <div className="space-y-2">
+                        {users.map(u => {
+                            const isExpanded = expandedUser === u.id;
+                            return (
+                                <div key={u.id} className="card overflow-hidden">
+                                    <div
+                                        className="flex items-center justify-between py-3 px-4 cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors"
+                                        onClick={() => setExpandedUser(isExpanded ? null : u.id)}
+                                    >
+                                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                                            <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
+                                                style={{
+                                                    background: u.role === 'super_admin' ? '#ede9fe' : u.role === 'salesman' ? '#dbeafe' : '#dcfce7',
+                                                    color: u.role === 'super_admin' ? '#6d28d9' : u.role === 'salesman' ? '#1d4ed8' : '#15803d',
+                                                }}
+                                            >
+                                                {u.owner_name.charAt(0).toUpperCase()}
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="font-semibold text-sm truncate">{u.owner_name}</p>
+                                                <p className="text-xs text-[var(--text-muted)] truncate">{u.email}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2 shrink-0">
+                                            <span className="text-xs font-medium px-2.5 py-1 rounded-full" style={{
+                                                background: u.role === 'super_admin' ? '#ede9fe' : u.role === 'salesman' ? '#dbeafe' : '#dcfce7',
+                                                color: u.role === 'super_admin' ? '#6d28d9' : u.role === 'salesman' ? '#1d4ed8' : '#15803d',
+                                            }}>{u.role.replace('_', ' ')}</span>
                                             <span className={`badge ${u.is_active ? 'badge-accepted' : 'badge-rejected'}`}>
                                                 {u.is_active ? 'Active' : 'Disabled'}
                                             </span>
-                                        </td>
-                                        <td>
-                                            <div className="flex items-center gap-1">
-                                                <button onClick={() => openEdit(u)} className="btn btn-ghost btn-sm"><Pencil className="w-3.5 h-3.5" /></button>
-                                                <button onClick={() => toggleActive(u)} className="btn btn-ghost btn-sm" title={u.is_active ? 'Disable' : 'Enable'}>
-                                                    {u.is_active ? <UserX className="w-3.5 h-3.5 text-red-500" /> : <UserCheck className="w-3.5 h-3.5 text-green-600" />}
+                                        </div>
+                                    </div>
+
+                                    {isExpanded && (
+                                        <div className="border-t border-[var(--border-color)] px-4 py-4 animate-fade-in">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                                                <div>
+                                                    <p className="text-xs text-[var(--text-muted)] mb-0.5">Name</p>
+                                                    <p className="text-sm font-medium">{u.owner_name}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-[var(--text-muted)] mb-0.5">Email</p>
+                                                    <p className="text-sm font-medium">{u.email}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-[var(--text-muted)] mb-0.5">Role</p>
+                                                    <p className="text-sm font-medium capitalize">{u.role.replace('_', ' ')}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-[var(--text-muted)] mb-0.5">Business</p>
+                                                    <p className="text-sm font-medium">{u.business_name || '—'}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-[var(--text-muted)] mb-0.5">Phone</p>
+                                                    <p className="text-sm font-medium">{u.phone || '—'}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-[var(--text-muted)] mb-0.5">Address</p>
+                                                    <p className="text-sm font-medium">{u.address || '—'}</p>
+                                                </div>
+                                                {u.gst && (
+                                                    <div>
+                                                        <p className="text-xs text-[var(--text-muted)] mb-0.5">GST</p>
+                                                        <p className="text-sm font-medium font-mono">{u.gst}</p>
+                                                    </div>
+                                                )}
+                                                <div>
+                                                    <p className="text-xs text-[var(--text-muted)] mb-0.5">Status</p>
+                                                    <p className="text-sm font-medium">{u.is_active ? 'Active' : 'Disabled'}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-[var(--text-muted)] mb-0.5">Joined</p>
+                                                    <p className="text-sm font-medium">{new Date(u.created_at).toLocaleDateString('en-IN')}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2 pt-2 border-t border-[var(--border-color)]">
+                                                <button onClick={(e) => { e.stopPropagation(); openEdit(u); }} className="btn btn-secondary btn-sm">
+                                                    <Pencil className="w-3.5 h-3.5" /> Edit
+                                                </button>
+                                                <button onClick={(e) => { e.stopPropagation(); toggleActive(u); }}
+                                                    className={`btn btn-sm ${u.is_active ? 'btn-secondary text-red-500' : 'btn-secondary text-green-600'}`}
+                                                >
+                                                    {u.is_active ? <><UserX className="w-3.5 h-3.5" /> Disable</> : <><UserCheck className="w-3.5 h-3.5" /> Enable</>}
                                                 </button>
                                             </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
                 )}
             </div>
