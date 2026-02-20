@@ -34,6 +34,23 @@
     --gradient-end: #8b5cf6;
   }
 
+  .dark {
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-card: #1e293b;
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-muted: #64748b;
+    --border-color: #334155;
+    --accent: #60a5fa;
+    --accent-hover: #3b82f6;
+    --success: #34d399;
+    --warning: #fbbf24;
+    --danger: #f87171;
+    --gradient-start: #60a5fa;
+    --gradient-end: #a78bfa;
+  }
+
   * {
     -webkit-tap-highlight-color: transparent;
   }

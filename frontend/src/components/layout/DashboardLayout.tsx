@@ -4,9 +4,10 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
+import { useTheme } from '@/lib/theme-context';
 import {
     LayoutDashboard, Package, ShoppingBag, Users, ClipboardList,
-    Search, LogOut, Menu, X, Package2
+    Search, LogOut, Menu, X, Package2, Sun, Moon
 } from 'lucide-react';
 import type { UserRole } from '@/lib/types';
 
@@ -48,6 +49,7 @@ export default function DashboardLayout({
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const pathname = usePathname();
     const { profile, signOut } = useAuth();
+    const { theme, toggleTheme } = useTheme();
 
     const items = navConfig[role] || [];
     const roleLabel = role === 'super_admin' ? 'Super Admin' : role === 'salesman' ? 'Salesman' : 'Retailer';
@@ -109,14 +111,21 @@ export default function DashboardLayout({
                         <p className="text-xs text-gray-400 truncate">{profile?.owner_name || 'User'}</p>
                         <p className="text-xs text-gray-500 truncate">{profile?.email}</p>
                     </div>
+                    <button onClick={toggleTheme} className="sidebar-link w-full text-gray-300 hover:text-white hover:bg-white/5 mb-1">
+                        {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                        {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                    </button>
                     <button onClick={handleSignOut} className="sidebar-link w-full text-red-400 hover:text-red-300 hover:bg-red-500/10">
                         <LogOut className="w-5 h-5" />
                         Sign Out
                     </button>
                 </div>
 
-                {/* Collapsed footer — sign out icon only */}
-                <div className={`border-t border-white/10 flex items-center justify-center py-3 ${sidebarOpen ? 'hidden' : ''}`}>
+                {/* Collapsed footer — icons only */}
+                <div className={`border-t border-white/10 flex flex-col items-center gap-1 py-3 ${sidebarOpen ? 'hidden' : ''}`}>
+                    <button onClick={toggleTheme} className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors" title={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}>
+                        {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                    </button>
                     <button onClick={handleSignOut} className="p-2 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors" title="Sign Out">
                         <LogOut className="w-5 h-5" />
                     </button>
@@ -131,7 +140,7 @@ export default function DashboardLayout({
             {/* Main content */}
             <div className={`main-content min-h-screen transition-[margin] duration-300`}>
                 {/* Mobile top bar */}
-                <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-lg border-b border-[var(--border-color)] md:hidden">
+                <header className="sticky top-0 z-20 backdrop-blur-lg border-b border-[var(--border-color)] md:hidden" style={{ background: 'var(--bg-primary)' }}>
                     <div className="flex items-center justify-between px-4 h-14">
                         <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 -ml-2 rounded-lg hover:bg-gray-100">
                             <Menu className="w-5 h-5" />
