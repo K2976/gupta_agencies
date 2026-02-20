@@ -79,34 +79,30 @@ export async function updateSession(request: NextRequest) {
             return response;
         }
 
-        // Role-based path protection — use cached cookie (no DB roundtrip)
-        let role: string | undefined = request.cookies.get('user_role')?.value;
+        // Role-based path protection — always verify from DB for protected routes
+        const { data: profile } = await supabase
+            .from('users')
+            .select('role, is_active')
+            .eq('id', user.id)
+            .single();
 
-        if (!role || !['super_admin', 'salesman', 'retailer'].includes(role)) {
-            // Cache miss — query DB once and cache
-            const { data: profile } = await supabase
-                .from('users')
-                .select('role, is_active')
-                .eq('id', user.id)
-                .single();
-
-            if (!profile || !profile.is_active) {
-                await supabase.auth.signOut();
-                const response = NextResponse.redirect(new URL('/', request.url));
-                response.cookies.delete('user_role');
-                return response;
-            }
-            role = profile.role as string;
-
-            // Cache the role for future requests
-            supabaseResponse.cookies.set('user_role', role, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'lax',
-                maxAge: 60 * 60 * 24,
-                path: '/',
-            });
+        if (!profile || !profile.is_active) {
+            await supabase.auth.signOut();
+            const response = NextResponse.redirect(new URL('/', request.url));
+            response.cookies.delete('user_role');
+            return response;
         }
+
+        const role = profile.role as string;
+
+        // Refresh cached role cookie for convenience (not trusted for authorization)
+        supabaseResponse.cookies.set('user_role', role, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 60 * 60 * 24,
+            path: '/',
+        });
 
         const rolePathMap: Record<string, string> = {
             super_admin: '/admin',
