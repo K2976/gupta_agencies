@@ -46,7 +46,7 @@ export default function AdminOrdersPage() {
                         <button
                             key={s}
                             onClick={() => { setFilter(s); setLoading(true); }}
-                            className={`btn btn-sm ${filter === s ? (s === 'all' ? 'btn-primary' : `btn-filter-${s}`) : 'btn-secondary'}`}
+                            className={`btn btn-sm ${filter === s ? `btn-filter-${s}` : 'btn-secondary'}`}
                         >
                             {s.charAt(0).toUpperCase() + s.slice(1)}
                         </button>

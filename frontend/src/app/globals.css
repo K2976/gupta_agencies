@@ -306,6 +306,27 @@
     background: #bbf7d0;
   }
 
+  .btn-filter-all {
+    background: #3b82f6;
+    color: #ffffff;
+    border: 1px solid #2563eb !important;
+  }
+
+  .btn-filter-all:hover {
+    background: #2563eb;
+  }
+
+  .btn-bw {
+    background: var(--text-primary);
+    color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+  }
+
+  .btn-bw:hover {
+    opacity: 0.85;
+    transform: translateY(-1px);
+  }
+
   .sidebar {
     background: var(--color-navy-950);
     color: white;

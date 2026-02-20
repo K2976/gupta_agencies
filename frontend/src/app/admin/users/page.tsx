@@ -108,13 +108,13 @@ export default function UsersPage() {
             <div className="animate-fade-in">
                 <div className="page-header">
                     <h1 className="page-title">Users</h1>
-                    <button onClick={openCreate} className="btn btn-primary"><Plus className="w-4 h-4" /> Add User</button>
+                    <button onClick={openCreate} className="btn btn-bw"><Plus className="w-4 h-4" /> Add User</button>
                 </div>
 
                 <div className="flex gap-2 mb-4 flex-wrap">
                     {roles.map(r => (
                         <button key={r} onClick={() => { setRoleFilter(r); setLoading(true); }}
-                            className={`btn btn-sm ${roleFilter === r ? (r === 'all' ? 'btn-primary' : `btn-filter-${r}`) : 'btn-secondary'}`}>
+                            className={`btn btn-sm ${roleFilter === r ? `btn-filter-${r}` : 'btn-secondary'}`}>
                             {r === 'all' ? 'All' : r.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase())}
                         </button>
                     ))}

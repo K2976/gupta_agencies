@@ -91,7 +91,7 @@ export default function BrandsPage() {
             <div className="animate-fade-in">
                 <div className="page-header">
                     <h1 className="page-title">Brands</h1>
-                    <button onClick={openCreate} className="btn btn-primary">
+                    <button onClick={openCreate} className="btn btn-bw">
                         <Plus className="w-4 h-4" /> Add Brand
                     </button>
                 </div>

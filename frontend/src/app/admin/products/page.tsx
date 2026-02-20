@@ -167,7 +167,7 @@ export default function ProductsPage() {
                             <Upload className="w-4 h-4" /> {uploading ? 'Importing...' : 'CSV Import'}
                             <input ref={fileRef} type="file" accept=".csv" className="hidden" onChange={e => e.target.files?.[0] && handleCSVUpload(e.target.files[0])} />
                         </label>
-                        <button onClick={openCreateProduct} className="btn btn-primary">
+                        <button onClick={openCreateProduct} className="btn btn-bw">
                             <Plus className="w-4 h-4" /> Add Product
                         </button>
                     </div>
