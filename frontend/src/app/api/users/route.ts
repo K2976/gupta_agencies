@@ -1,8 +1,28 @@
-import { createServiceRoleClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
     try {
+        const requesterClient = await createServerSupabaseClient();
+        const {
+            data: { user: requester },
+        } = await requesterClient.auth.getUser();
+
+        if (!requester) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const serviceRoleClient = await createServiceRoleClient();
+        const { data: requesterProfile, error: requesterProfileError } = await serviceRoleClient
+            .from('users')
+            .select('role, is_active')
+            .eq('id', requester.id)
+            .single();
+
+        if (requesterProfileError || !requesterProfile?.is_active || requesterProfile.role !== 'super_admin') {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
         const body = await request.json();
         const { email, password, role, owner_name, business_name, phone, address, gst, assigned_salesman_id } = body;
 
@@ -21,7 +41,7 @@ export async function POST(request: Request) {
         // Use email prefix as fallback name for salesman/admin
         const finalOwnerName = owner_name?.trim() || email.split('@')[0];
 
-        const supabase = await createServiceRoleClient();
+        const supabase = serviceRoleClient;
 
         // Create auth user
         const { data: authData, error: authError } = await supabase.auth.admin.createUser({
