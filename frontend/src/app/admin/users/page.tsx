@@ -137,8 +137,8 @@ export default function UsersPage() {
                                         <div className="flex items-center gap-3 flex-1 min-w-0">
                                             <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
                                                 style={{
-                                                    background: u.role === 'super_admin' ? '#ede9fe' : u.role === 'salesman' ? '#dbeafe' : '#dcfce7',
-                                                    color: u.role === 'super_admin' ? '#6d28d9' : u.role === 'salesman' ? '#1d4ed8' : '#15803d',
+                                                    background: u.role === 'super_admin' ? '#ede9fe' : u.role === 'salesman' ? '#dbeafe' : '#fef3c7',
+                                                    color: u.role === 'super_admin' ? '#6d28d9' : u.role === 'salesman' ? '#1d4ed8' : '#b45309',
                                                 }}
                                             >
                                                 {u.owner_name.charAt(0).toUpperCase()}
@@ -150,8 +150,8 @@ export default function UsersPage() {
                                         </div>
                                         <div className="flex items-center gap-2 shrink-0">
                                             <span className="text-xs font-medium px-2.5 py-1 rounded-full" style={{
-                                                background: u.role === 'super_admin' ? '#ede9fe' : u.role === 'salesman' ? '#dbeafe' : '#dcfce7',
-                                                color: u.role === 'super_admin' ? '#6d28d9' : u.role === 'salesman' ? '#1d4ed8' : '#15803d',
+                                                background: u.role === 'super_admin' ? '#ede9fe' : u.role === 'salesman' ? '#dbeafe' : '#fef3c7',
+                                                color: u.role === 'super_admin' ? '#6d28d9' : u.role === 'salesman' ? '#1d4ed8' : '#b45309',
                                             }}>{u.role.replace('_', ' ')}</span>
                                             <span className={`badge ${u.is_active ? 'badge-accepted' : 'badge-rejected'}`}>
                                                 {u.is_active ? 'Active' : 'Disabled'}

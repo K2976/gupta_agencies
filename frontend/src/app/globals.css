@@ -297,13 +297,13 @@
   }
 
   .btn-filter-retailer {
-    background: #dcfce7;
-    color: #15803d;
-    border: 1px solid #86efac;
+    background: #fef3c7;
+    color: #b45309;
+    border: 1px solid #fbbf24;
   }
 
   .btn-filter-retailer:hover {
-    background: #bbf7d0;
+    background: #fde68a;
   }
 
   .btn-filter-all {
